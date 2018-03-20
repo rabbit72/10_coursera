@@ -82,11 +82,9 @@ if __name__ == '__main__':
             exit('Directory for saving not found')
         number_courses = 20
         courses_list = get_courses_list(number_courses)
-        # path_for_save = '.'
-        # courses_list = ['https://www.coursera.org/learn/hanyu-yufa']
         courses_info = [info for info in get_courses_info(courses_list)]
         output_courses_info_to_xlsx(path_for_save, courses_info)
     except IndexError:
         exit('Path for saving not input')
     except requests.ConnectionError:
-        exit('Check connection')
+        exit('Check your connection')
