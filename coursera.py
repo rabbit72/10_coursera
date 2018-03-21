@@ -70,8 +70,8 @@ def output_courses_info_to_xlsx(directory, courses_info):
     sheet.title = 'courses'
     title_row = [title for title in courses_info[0].keys()]
     sheet.append(title_row)
-    for course in courses_info:
-        sheet.append([value for value in course.values()])
+    for course_info in courses_info:
+        sheet.append([one_info for one_info in course_info.values()])
     wb.save(file_path)
 
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
             exit('Directory for saving not found')
         number_courses = 20
         courses_list = get_courses_list(number_courses)
-        courses_info = [info for info in get_courses_info(courses_list)]
+        courses_info = [course_info for course_info in get_courses_info(courses_list)]
         output_courses_info_to_xlsx(path_for_save, courses_info)
     except IndexError:
         exit('Path for saving not input')
