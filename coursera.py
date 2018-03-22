@@ -52,15 +52,19 @@ def get_weeks_number(course):
     return len(weeks_number) if weeks_number else None
 
 
-def get_course_info(course_page):
-    course = soup(course_page, 'lxml')
-    return OrderedDict([
-        ('name', get_name_course(course)),
-        ('language', get_language_course(course)),
-        ('start_date', get_start_date(course)),
-        ('weeks_number', get_weeks_number(course)),
-        ('user_rating', get_user_rating(course))
-    ])
+def get_courses_info(courses_pages):
+    courses_info = []
+    for course_page in courses_pages:
+        course = soup(course_page, 'lxml')
+        course_info = OrderedDict([
+            ('name', get_name_course(course)),
+            ('language', get_language_course(course)),
+            ('start_date', get_start_date(course)),
+            ('weeks_number', get_weeks_number(course)),
+            ('user_rating', get_user_rating(course))
+        ])
+        courses_info.append(course_info)
+    return courses_info
 
 
 def fill_workbook(workbook=Workbook()):
@@ -89,9 +93,8 @@ if __name__ == '__main__':
             exit('Directory for saving not found')
         url_xml_coursers = 'https://www.coursera.org/sitemap~www~courses.xml'
         courses_urls = get_random_courses(fetch_page(url_xml_coursers))
-        courses_info = []
-        for course_url in courses_urls:
-            courses_info.append(get_course_info(fetch_page(course_url)))
+        courses_pages = [fetch_page(course_url) for course_url in courses_urls]
+        courses_info = get_courses_info(courses_pages)
         save_workbook(fill_workbook(), path_for_save)
     except IndexError:
         exit('Path for saving not input')
