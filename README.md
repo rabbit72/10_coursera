@@ -4,7 +4,7 @@ This script writes data about 20 random courses in an Excel spreadsheet.
 
 Each course on a new line with these columns:
 
-```'name', 'url', 'language', 'start_date', 'weeks_number', 'user_rating'```
+```'name', 'language', 'start_date', 'weeks_number', 'user_rating'```
 
 # How to install
 
