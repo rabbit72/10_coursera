@@ -9,13 +9,13 @@ from bs4 import BeautifulSoup as soup
 from openpyxl import Workbook
 
 
-def fetch_page_text(url, params=None):
+def fetch_page(url, params=None):
     response = requests.get(url, params)
     response.encoding = 'utf8'
     return response.text
 
 
-def get_random_courses(xml_page, number_courses=None):
+def get_random_courses(xml_page, number_courses=20):
     soup_courses = soup(xml_page, 'xml')
     courses_list = soup_courses.text.split()
     if number_courses:
@@ -73,8 +73,11 @@ def fill_workbook(workbook=Workbook()):
     return workbook
 
 
-def save_workbook(workbook, directory_for_save):
+def save_workbook(workbook, directory_for_save=None):
     file_name = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.xlsx')
+    current_directory = '.'
+    if not directory_for_save:
+        directory_for_save = current_directory
     file_path = os.path.join(directory_for_save, file_name)
     workbook.save(file_path)
 
@@ -85,14 +88,10 @@ if __name__ == '__main__':
         if not os.path.isdir(path_for_save):
             exit('Directory for saving not found')
         url_xml_coursers = 'https://www.coursera.org/sitemap~www~courses.xml'
-        number_courses = 20
-        courses_urls = get_random_courses(
-            fetch_page_text(url_xml_coursers),
-            number_courses
-        )
+        courses_urls = get_random_courses(fetch_page(url_xml_coursers))
         courses_info = []
         for course_url in courses_urls:
-            courses_info.append(get_course_info(fetch_page_text(course_url)))
+            courses_info.append(get_course_info(fetch_page(course_url)))
         save_workbook(fill_workbook(), path_for_save)
     except IndexError:
         exit('Path for saving not input')
