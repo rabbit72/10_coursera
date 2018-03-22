@@ -9,10 +9,14 @@ from bs4 import BeautifulSoup as soup
 from openpyxl import Workbook
 
 
-def get_courses_list(number_courses=None):
-    link_coursers = 'https://www.coursera.org/sitemap~www~courses.xml'
-    response = requests.get(link_coursers)
-    soup_courses = soup(response.text, 'xml')
+def fetch_page_text(url, params=None):
+    response = requests.get(url, params)
+    response.encoding = 'utf8'
+    return response.text
+
+
+def get_random_courses(xml_page, number_courses=None):
+    soup_courses = soup(xml_page, 'xml')
     courses_list = soup_courses.text.split()
     if number_courses:
         return random.sample(courses_list, number_courses)
@@ -20,7 +24,8 @@ def get_courses_list(number_courses=None):
 
 
 def get_start_date(course):
-    start_date = course.find(attrs={'class': 'startdate rc-StartDateString caption-text'})
+    attrs = {'class': 'startdate rc-StartDateString caption-text'}
+    start_date = course.find(attrs=attrs)
     return start_date.text if start_date else None
 
 
@@ -47,32 +52,31 @@ def get_weeks_number(course):
     return len(weeks_number) if weeks_number else None
 
 
-def get_courses_info(urls_list):
-    for url in urls_list:
-        response = requests.get(url)
-        response.encoding = 'utf8'
-        course = soup(response.text, 'lxml')
-        yield OrderedDict([
-            ('name', get_name_course(course)),
-            ('url', url),
-            ('language', get_language_course(course)),
-            ('start_date', get_start_date(course)),
-            ('weeks_number', get_weeks_number(course)),
-            ('user_rating', get_user_rating(course))
-        ])
+def get_course_info(course_page):
+    course = soup(course_page, 'lxml')
+    return OrderedDict([
+        ('name', get_name_course(course)),
+        ('language', get_language_course(course)),
+        ('start_date', get_start_date(course)),
+        ('weeks_number', get_weeks_number(course)),
+        ('user_rating', get_user_rating(course))
+    ])
 
 
-def output_courses_info_to_xlsx(directory, courses_info):
-    file_name = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.xlsx')
-    file_path = os.path.join(directory, file_name)
-    wb = Workbook()
-    sheet = wb.active
+def fill_workbook(workbook=Workbook()):
+    sheet = workbook.active
     sheet.title = 'courses'
     title_row = [title for title in courses_info[0].keys()]
     sheet.append(title_row)
     for course_info in courses_info:
         sheet.append([one_info for one_info in course_info.values()])
-    wb.save(file_path)
+    return workbook
+
+
+def save_workbook(workbook, directory_for_save):
+    file_name = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.xlsx')
+    file_path = os.path.join(directory_for_save, file_name)
+    workbook.save(file_path)
 
 
 if __name__ == '__main__':
@@ -80,10 +84,16 @@ if __name__ == '__main__':
         path_for_save = sys.argv[1]
         if not os.path.isdir(path_for_save):
             exit('Directory for saving not found')
+        url_xml_coursers = 'https://www.coursera.org/sitemap~www~courses.xml'
         number_courses = 20
-        courses_list = get_courses_list(number_courses)
-        courses_info = [course_info for course_info in get_courses_info(courses_list)]
-        output_courses_info_to_xlsx(path_for_save, courses_info)
+        courses_urls = get_random_courses(
+            fetch_page_text(url_xml_coursers),
+            number_courses
+        )
+        courses_info = []
+        for course_url in courses_urls:
+            courses_info.append(get_course_info(fetch_page_text(course_url)))
+        save_workbook(fill_workbook(), path_for_save)
     except IndexError:
         exit('Path for saving not input')
     except requests.ConnectionError:
